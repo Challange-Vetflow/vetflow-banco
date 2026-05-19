@@ -1,6 +1,6 @@
-# VetFlow API — Challenge FIAP 2026
+# VetFlow — Banco de Dados Oracle | Challenge FIAP 2026
 
-Solução desenvolvida para o **Challenge FIAP 2026** em parceria com a **CLYVO VET**.
+Projeto de banco de dados relacional desenvolvido para o **Challenge FIAP 2026** em parceria com a **CLYVO VET**.
 
 ## Integrantes do Grupo
 
@@ -14,67 +14,86 @@ Solução desenvolvida para o **Challenge FIAP 2026** em parceria com a **CLYVO 
 
 ## Problema de Negócio
 
-Tutores de pets só acionam clínicas em urgências ou vacinas óbvias. Isso gera baixa recorrência, menor LTV para as clínicas e histórico clínico fragmentado.
+A jornada de saúde do pet é fragmentada — tutores só interagem com clínicas em urgências, vacinas e retornos pontuais. Isso gera histórico clínico disperso, abandono de tratamentos e baixa recorrência para as clínicas.
 
 ## Solução
 
-API REST que centraliza o histórico clínico do pet, organiza agendamentos, registra vacinas e medicamentos, servindo como backend para app mobile, dashboard clínico e integrações via WhatsApp.
+Modelagem relacional centralizada que serve de base para a plataforma VetFlow, armazenando tutores, pets, clínicas, agendamentos, vacinas e medicamentos de forma integrada e rastreável.
 
-## Arquitetura Java
-```
-src/main/java/fiap/com/br/vetflow/
-├── config/       SwaggerConfig
-├── controller/   TutorController, PetController, ClinicController,
-│                 AppointmentController, VaccineController, MedicationController
-├── dto/          TutorDtos, PetDtos, ClinicDtos, AppointmentDtos, VaccineDtos, MedicationDtos
-├── entity/       Tutor, Pet, Clinic, Appointment, Vaccine, Medication + Enums
-├── repository/   Spring Data JPA com JPQL customizada
-└── service/      TutorService, PetService, ClinicService,
-                  AppointmentService, VaccineService, MedicationService
-```
+## Tecnologia
 
-## Tecnologias
-- Spring Boot 3.4, Spring Data JPA, Spring Cache, Lombok
-- H2 in-memory (desenvolvimento), Oracle XE (produção)
-- Swagger/OpenAPI via springdoc
+Oracle Database XE — acessado via `oracle.fiap.com.br:1521/orcl`
 
 ## Como Executar
 
-```bash
-./mvnw spring-boot:run
+1. Acesse o Oracle via SQL Developer ou SQL*Plus com suas credenciais FIAP (RM/senha)
+2. Execute o script `vetflow_oracle.sql` na ordem em que está organizado
+
+```sql
+-- Exemplo via SQL*Plus
+@vetflow_oracle.sql
 ```
 
-- Swagger: http://localhost:8080/swagger-ui.html
-- H2 Console: http://localhost:8080/h2-console (JDBC URL: `jdbc:h2:mem:vetflowdb`)
+## Estrutura do Banco
 
-## Produção com Oracle FIAP
+### Tabelas
 
-Edite `src/main/resources/application.properties`:
-```properties
-spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl
-spring.datasource.username=<SEU_RM>
-spring.datasource.password=<SUA_SENHA>
-spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
-spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
-spring.jpa.hibernate.ddl-auto=none
-spring.h2.console.enabled=false
+| Tabela | Descrição |
+|--------|-----------|
+| `CV_TUTORS` | Responsáveis pelos pets |
+| `CV_PETS` | Animais cadastrados, vinculados ao tutor |
+| `CV_CLINICS` | Clínicas e hospitais veterinários parceiros |
+| `CV_APPOINTMENTS` | Agendamentos e consultas dos pets nas clínicas |
+| `CV_VACCINES` | Histórico de vacinas aplicadas e próximas doses |
+| `CV_MEDICATIONS` | Medicamentos prescritos com controle de adesão |
+| `CV_ERROR_LOG` | Registro de erros das procedures (auditoria) |
+
+### Relacionamentos principais
+
+```
+CV_TUTORS (1) ──< (N) CV_PETS
+CV_PETS   (1) ──< (N) CV_APPOINTMENTS ──> (N) CV_CLINICS
+CV_PETS   (1) ──< (N) CV_VACCINES
+CV_PETS   (1) ──< (N) CV_MEDICATIONS
 ```
 
-## Rotas Principais
+Todas as tabelas usam `RAW(16)` com `SYS_GUID()` como chave primária, garantindo unicidade global sem dependência de sequences.
 
-| Recurso | GET lista | GET id | POST | PUT | DELETE |
-|---------|-----------|--------|------|-----|--------|
-| /api/tutors | paginado+sort | /{id} | criar | /{id} | /{id} |
-| /api/pets | paginado+sort | /{id} | criar | /{id} | /{id} |
-| /api/clinics | lista | /{id} | criar | /{id} | /{id} |
-| /api/appointments | lista | /{id} | criar | /{id} | /{id} |
-| /api/vaccines | paginado | /{id} | criar | - | /{id} |
-| /api/medications | lista | /{id} | criar | /{id} | /{id} |
+## Conteúdo do Script SQL
 
-Rotas extras: `/api/pets/by-tutor/{id}`, `/api/vaccines/expired`, `/api/vaccines/due-soon`, `/api/appointments/pending`, `/api/medications/active`, `/api/tutors/search`
+O arquivo `vetflow_oracle.sql` está organizado nas seguintes seções:
+
+**1. DDL — Criação das tabelas**
+Todas as tabelas com constraints (PK, FK, CHECK, UNIQUE) e 3ª Forma Normal (3FN).
+
+**2. Procedures de carga**
+Uma procedure por tabela para inserção de dados via parâmetro (sem hard-code). Todas incluem:
+- `EXCEPTION WHEN OTHERS`
+- `DUP_VAL_ON_INDEX` — trata duplicidade de chave única
+- `VALUE_ERROR` — trata erro de tipo/tamanho de dado
+- Registro automático na tabela `CV_ERROR_LOG`
+
+**3. Carga de dados**
+Inserção de dados significativos via chamada das procedures:
+- 2 tutores, 2 clínicas, 3 pets
+- Vacinas, medicamentos e agendamentos para cada pet
+
+**4. Consultas com JOIN, GROUP BY e ORDER BY**
+3 blocos anônimos com junções entre tabelas, agrupamento e ordenação.
+
+**5. Relatório LAG/LEAD**
+Bloco que exibe valor atual, anterior e próximo de uma coluna usando funções de janela, com "Vazio" quando não há linha adjacente.
+
+**6. Relatórios com cursor explícito**
+4 blocos anônimos com cursor explícito e tomada de decisão:
+- Listagem completa com sub-totais por tutor
+- Alerta de vacinas vencidas por pet
+- Agendamentos pendentes por clínica
+- Alerta de medicamentos com término próximo
 
 ## Benefícios para o Negócio
-- Aumento da recorrência de consultas preventivas
-- Redução de vacinas vencidas e abandono de tratamentos
-- Histórico longitudinal estruturado por pet
-- Base escalável para integração com app mobile e WhatsApp
+
+- Histórico clínico longitudinal estruturado por pet
+- Rastreabilidade completa de vacinas e medicamentos
+- Base de dados para alertas preventivos e score de risco
+- Suporte a analytics para clínicas (recorrência, LTV, adesão)
