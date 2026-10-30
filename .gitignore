@@ -1,0 +1,18 @@
+# Build outputs
+bin/
+obj/
+target/
+
+# IDEs
+.idea/
+.vs/
+.vscode/
+*.iml
+
+# Logs e dados locais
+logs/
+data/
+*.log
+
+# Segredos locais
+.env

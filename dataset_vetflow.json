@@ -1,0 +1,57 @@
+{
+"tutores": [
+{"_id":"5EFC43E21E31DB66E063103CA8C0FB50","nome":"Ana Paula Silva","email":"ana.silva@email.com","telefone":"(11) 98002-2222","ativo":true,"criadoEm":"2026-10-29T11:12:08","pets":[
+ {"petId":"5EFC43E21E39DB66E063103CA8C0FB50","nome":"Bolinha","especie":"DOG","raca":"Bulldog Francês","dataNascimento":"2021-01-20","pesoKg":12,"idadeMeses":69,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E47DB66E063103CA8C0FB50","nome":"V8","aplicadaEm":"2026-03-05","proximaDose":"2027-03-05","lote":"LOTE-020"}],
+  "medicamentos":[
+   {"medicamentoId":"5EFC43E21E4EDB66E063103CA8C0FB50","nome":"Metronidazol","dosagem":"15mg/kg","frequencia":"A cada 8h","inicio":"2026-03-10","fim":"2026-03-20","status":"COMPLETED"},
+   {"medicamentoId":"5EFC43E21E4FDB66E063103CA8C0FB50","nome":"Meloxicam","dosagem":"0,1mg/kg","frequencia":"A cada 24h","inicio":"2026-10-20","fim":"2026-11-05","status":"ACTIVE"}],
+  "consultas":[
+   {"consultaId":"5EFC43E21E3FDB66E063103CA8C0FB50","clinicaId":"5EFC43E21E36DB66E063103CA8C0FB50","clinicaNome":"Hospital Pet Vida","agendadaPara":"2026-11-13T09:00:00","tipo":"RETURN","observacoes":"Retorno pós-cirurgia","concluida":false}]}]},
+{"_id":"5EFC43E21E30DB66E063103CA8C0FB50","nome":"Carlos Mendes","email":"carlos.mendes@email.com","telefone":"(11) 99001-1111","ativo":true,"criadoEm":"2026-10-29T11:12:08","pets":[
+ {"petId":"5EFC43E21E3BDB66E063103CA8C0FB50","nome":"Luna","especie":"CAT","raca":"Siamês","dataNascimento":"2023-02-14","pesoKg":3.8,"idadeMeses":44,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E49DB66E063103CA8C0FB50","nome":"Quádrupla","aplicadaEm":"2025-09-01","proximaDose":"2026-09-01","lote":"LOTE-050"}],
+  "medicamentos":[],
+  "consultas":[
+   {"consultaId":"5EFC43E21E40DB66E063103CA8C0FB50","clinicaId":"5EFC43E21E35DB66E063103CA8C0FB50","clinicaNome":"Clínica VetSaúde","agendadaPara":"2026-11-18T11:00:00","tipo":"VACCINATION","observacoes":"Quádrupla felina atrasada","concluida":false}]},
+ {"petId":"5EFC43E21E38DB66E063103CA8C0FB50","nome":"Mia","especie":"CAT","raca":"Persa","dataNascimento":"2022-07-10","pesoKg":4.2,"idadeMeses":51,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E45DB66E063103CA8C0FB50","nome":"Quádrupla","aplicadaEm":"2025-06-20","proximaDose":"2026-06-20","lote":"LOTE-010"},
+   {"vacinaId":"5EFC43E21E46DB66E063103CA8C0FB50","nome":"FeLV","aplicadaEm":"2026-02-01","proximaDose":"2027-02-01","lote":"LOTE-030"}],
+  "medicamentos":[
+   {"medicamentoId":"5EFC43E21E4DDB66E063103CA8C0FB50","nome":"Revolution Plus","dosagem":"1 pipeta","frequencia":"Mensal","inicio":"2026-01-01","fim":"2026-12-31","status":"ACTIVE"}],
+  "consultas":[
+   {"consultaId":"5EFC43E21E3EDB66E063103CA8C0FB50","clinicaId":"5EFC43E21E35DB66E063103CA8C0FB50","clinicaNome":"Clínica VetSaúde","agendadaPara":"2026-11-03T14:00:00","tipo":"VACCINATION","observacoes":"Reforço de vacinas da Mia","concluida":false}]},
+ {"petId":"5EFC43E21E37DB66E063103CA8C0FB50","nome":"Rex","especie":"DOG","raca":"Labrador","dataNascimento":"2020-03-15","pesoKg":28.5,"idadeMeses":79,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E43DB66E063103CA8C0FB50","nome":"V10","aplicadaEm":"2025-10-10","proximaDose":"2026-10-10","lote":"LOTE-001"},
+   {"vacinaId":"5EFC43E21E44DB66E063103CA8C0FB50","nome":"Antirrábica","aplicadaEm":"2026-03-15","proximaDose":"2027-03-15","lote":"LOTE-002"}],
+  "medicamentos":[
+   {"medicamentoId":"5EFC43E21E4BDB66E063103CA8C0FB50","nome":"Simparica Trio","dosagem":"1 comprimido","frequencia":"Mensal","inicio":"2026-01-01","fim":"2026-12-31","status":"ACTIVE"},
+   {"medicamentoId":"5EFC43E21E4CDB66E063103CA8C0FB50","nome":"Carprofen","dosagem":"2,2mg/kg","frequencia":"A cada 12h","inicio":"2026-04-01","fim":"2026-04-14","status":"COMPLETED"}],
+  "consultas":[
+   {"consultaId":"5EFC43E21E42DB66E063103CA8C0FB50","clinicaId":"5EFC43E21E36DB66E063103CA8C0FB50","clinicaNome":"Hospital Pet Vida","agendadaPara":"2026-09-29T10:00:00","tipo":"CHECKUP","observacoes":"Check-up anterior","concluida":true},
+   {"consultaId":"5EFC43E21E3DDB66E063103CA8C0FB50","clinicaId":"5EFC43E21E35DB66E063103CA8C0FB50","clinicaNome":"Clínica VetSaúde","agendadaPara":"2026-11-08T10:00:00","tipo":"CHECKUP","observacoes":"Check-up anual do Rex","concluida":false}]},
+ {"petId":"5EFC43E21E3ADB66E063103CA8C0FB50","nome":"Thor","especie":"DOG","raca":"Golden Retriever","dataNascimento":"2019-05-10","pesoKg":32,"idadeMeses":89,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E48DB66E063103CA8C0FB50","nome":"V10","aplicadaEm":"2026-05-12","proximaDose":"2027-05-12","lote":"LOTE-040"}],
+  "medicamentos":[
+   {"medicamentoId":"5EFC43E21E50DB66E063103CA8C0FB50","nome":"Condroitina","dosagem":"1 comprimido","frequencia":"A cada 24h","inicio":"2026-09-01","fim":"2027-02-28","status":"ACTIVE"}],
+  "consultas":[]}]},
+{"_id":"5EFC43E21E32DB66E063103CA8C0FB50","nome":"Fernanda Costa","email":"fernanda.costa@email.com","telefone":"(11) 97003-3333","ativo":true,"criadoEm":"2026-10-29T11:12:08","pets":[
+ {"petId":"5EFC43E21E3CDB66E063103CA8C0FB50","nome":"Bidu","especie":"DOG","raca":"Poodle","dataNascimento":"2021-08-01","pesoKg":6.5,"idadeMeses":62,"ativo":true,
+  "vacinas":[
+   {"vacinaId":"5EFC43E21E4ADB66E063103CA8C0FB50","nome":"Antirrábica","aplicadaEm":"2026-08-20","proximaDose":"2027-08-20","lote":"LOTE-060"}],
+  "medicamentos":[],
+  "consultas":[
+   {"consultaId":"5EFC43E21E41DB66E063103CA8C0FB50","clinicaId":"5EFC43E21E36DB66E063103CA8C0FB50","clinicaNome":"Hospital Pet Vida","agendadaPara":"2026-11-06T16:00:00","tipo":"CHECKUP","observacoes":"Avaliação dermatológica","concluida":false}]}]},
+{"_id":"5EFC43E21E34DB66E063103CA8C0FB50","nome":"Juliana Alves","email":"juliana.alves@email.com","telefone":"(11) 95005-5555","ativo":true,"criadoEm":"2026-10-29T11:12:08","pets":[]},
+{"_id":"5EFC43E21E33DB66E063103CA8C0FB50","nome":"Marcos Rocha","email":"marcos.rocha@email.com","telefone":"(11) 96004-4444","ativo":true,"criadoEm":"2026-10-29T11:12:08","pets":[]}
+],
+"clinicas": [
+{"_id":"5EFC43E21E35DB66E063103CA8C0FB50","nome":"Clínica VetSaúde","endereco":"Av. Paulista, 1000 - SP","telefone":"(11) 3001-0001","email":"contato@vetsaude.com","ativo":true},
+{"_id":"5EFC43E21E36DB66E063103CA8C0FB50","nome":"Hospital Pet Vida","endereco":"Rua Augusta, 500 - SP","telefone":"(11) 3002-0002","email":"contato@petvida.com","ativo":true}
+]
+}

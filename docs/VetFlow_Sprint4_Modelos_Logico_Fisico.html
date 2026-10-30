@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>VetFlow — Modelos Lógico e Físico — Sprint 4</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; @bottom-center { content: "VetFlow · Sprint 4 · Página " counter(page) " de " counter(pages); font: 9pt Arial, sans-serif; color: #6b7280; } }
+  @page land { size: A4 landscape; margin: 12mm 12mm 14mm 12mm; @bottom-center { content: "VetFlow · Sprint 4 · Página " counter(page) " de " counter(pages); font: 9pt Arial, sans-serif; color: #6b7280; } }
+  .der { page: land; break-before: page; break-after: page; }
+  .der img { width: 100%; max-height: 165mm; object-fit: contain; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.38; color: #1f2937; margin: 0; }
+  h1 { font-size: 30pt; margin: 0 0 4pt; color: #0f4c5c; }
+  h2 { font-size: 16pt; color: #0f4c5c; border-bottom: 2px solid #0f4c5c; padding-bottom: 3pt; margin: 22pt 0 8pt; break-after: avoid; }
+  h3 { font-size: 12.5pt; color: #0f4c5c; margin: 14pt 0 5pt; break-after: avoid; }
+  h4 { font-size: 11pt; margin: 10pt 0 4pt; break-after: avoid; }
+  p { margin: 4pt 0 6pt; }
+  .cover { padding-top: 38mm; }
+  .cover .sub { font-size: 15pt; color: #0f4c5c; font-weight: 700; margin: 6pt 0; }
+  .cover .disc { font-size: 12pt; margin: 4pt 0 22pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 10pt; font-size: 9.5pt; break-inside: avoid; }
+  th { background: #d9eef2; text-align: left; border: 1px solid #94b5bd; padding: 3pt 5pt; }
+  td { border: 1px solid #c3d4d8; padding: 3pt 5pt; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7fbfc; }
+  code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 9pt; }
+  .pk { color: #b45309; font-weight: 700; }
+  .fk { color: #1d4ed8; font-weight: 700; }
+  .box { border: 1px solid #94b5bd; background: #f3f9fa; border-radius: 4pt; padding: 6pt 9pt; margin: 6pt 0 10pt; break-inside: avoid; }
+  .new { background: #fff7e0; border-color: #e5b53f; }
+  figure { margin: 8pt 0; text-align: center; break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #c3d4d8; }
+  figcaption { font-size: 9pt; color: #6b7280; margin-top: 3pt; }
+  ul { margin: 3pt 0 6pt 16pt; padding: 0; }
+  li { margin: 1.5pt 0; }
+  .pb { break-before: page; }
+  .small { font-size: 9pt; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<!-- ============================ CAPA ============================ -->
+<section class="cover">
+  <h1>VetFlow</h1>
+  <div class="sub">Challenge FIAP 2026 · Clyvo Vet</div>
+  <div class="sub">Mastering Relational and Non-Relational Database — Sprint 4</div>
+  <div class="disc">Modelo lógico, modelo físico e empacotamento PL/SQL (Oracle) + estrutura MongoDB</div>
+
+  <table style="width:80%; margin-left:0">
+    <tr><th>Integrante</th><th>RM</th><th>Turma</th></tr>
+    <tr><td>Andrei de Paiva Gibbini</td><td>563061</td><td>2TDSPF</td></tr>
+    <tr><td>Arthur Câmara</td><td>562310</td><td>2TDSPG</td></tr>
+    <tr><td>Diogo Cunha</td><td>563654</td><td>2TDSPF</td></tr>
+    <tr><td>Pedro Sakai Silva Zambaca</td><td>565956</td><td>2TDSPF</td></tr>
+    <tr><td>Pedro Santos Pequini</td><td>561842</td><td>2TDSPF</td></tr>
+  </table>
+
+  <p style="margin-top:18pt">Banco relacional: Oracle 19c (<code>oracle.fiap.com.br:1521/ORCL</code>), schema único compartilhado pelas aplicações Java (Spring Boot) e .NET (EF Core).<br>
+  Banco não relacional: MongoDB, banco <b>vetflow</b>, alimentado pelo dataset JSON exportado do Oracle.</p>
+</section>
+
+<!-- ============================ 1. VISÃO GERAL ============================ -->
+<section class="pb">
+  <h2>1. Visão geral</h2>
+  <p>O VetFlow centraliza a jornada de saúde do pet: tutores, pets, clínicas parceiras, consultas, vacinas e medicamentos. Nesta sprint o modelo da Sprint 3 (nota 100) foi mantido, com duas alterações: a nova tabela <b>CV_Users</b> (login único para as aplicações Java e .NET) e o índice único de e-mail em <b>CV_Tutors</b>. Todas as rotinas PL/SQL foram <b>empacotadas</b> em quatro pacotes, e o trigger de auditoria passou a delegar sua regra a um deles.</p>
+  <div class="box">
+    <b>Convenções.</b> Tabelas de negócio com nomes entre aspas em PascalCase (padrão do EF Core), prefixo <code>CV_</code>; chaves primárias <code>RAW(16)</code> (GUID gerado por <code>SYS_GUID()</code> ou pela aplicação); enums gravados como <code>NUMBER</code> ordinal; booleanos <code>NUMBER(1)</code> com 0/1; exclusão lógica pela coluna <code>"Active"</code>.
+  </div>
+  <table>
+    <tr><th>Enum (ordinal = contrato)</th><th>Valores</th></tr>
+    <tr><td>Species (espécie)</td><td>0 = DOG · 1 = CAT · 2 = BIRD · 3 = RABBIT · 4 = OTHER</td></tr>
+    <tr><td>AppointmentType (tipo de consulta)</td><td>0 = VACCINATION · 1 = CHECKUP · 2 = SURGERY · 3 = RETURN · 4 = EMERGENCY · 5 = OTHER</td></tr>
+    <tr><td>MedicationStatus (status do medicamento)</td><td>0 = ACTIVE · 1 = COMPLETED · 2 = SUSPENDED</td></tr>
+    <tr><td>Role (perfil de login)</td><td>'TUTOR' ou 'VET'</td></tr>
+  </table>
+
+  <h2>2. Modelo lógico</h2>
+  <h3>2.1 Entidades e atributos</h3>
+  <table>
+    <tr><th style="width:17%">Entidade</th><th>Atributos (<span class="pk">PK</span> · <span class="fk">FK</span>)</th><th style="width:28%">Descrição</th></tr>
+    <tr><td>Tutor</td><td><span class="pk">Id</span>, Name, Email (único), Phone, Active, CreatedAt</td><td>Responsável pelos pets</td></tr>
+    <tr><td>Clínica</td><td><span class="pk">Id</span>, Name, Address, Phone, Email, Active, CreatedAt</td><td>Clínica ou hospital veterinário parceiro</td></tr>
+    <tr><td>Pet</td><td><span class="pk">Id</span>, Name, Species, Breed, BirthDate, WeightKg, <span class="fk">TutorId</span>, Active, CreatedAt</td><td>Animal de um tutor</td></tr>
+    <tr><td>Consulta</td><td><span class="pk">Id</span>, <span class="fk">PetId</span>, <span class="fk">ClinicId</span>, ScheduledAt, Type, Notes, Completed, Active, CreatedAt</td><td>Entidade associativa Pet × Clínica (agendamento)</td></tr>
+    <tr><td>Vacina</td><td><span class="pk">Id</span>, <span class="fk">PetId</span>, VaccineName, AppliedAt, NextDoseAt, Batch, Active, CreatedAt</td><td>Dose aplicada e próxima dose</td></tr>
+    <tr><td>Medicamento</td><td><span class="pk">Id</span>, <span class="fk">PetId</span>, Name, Dosage, Frequency, StartDate, EndDate, Status, Active, CreatedAt</td><td>Tratamento prescrito</td></tr>
+    <tr class="new"><td><b>Usuário (novo)</b></td><td><span class="pk">Id</span>, Name, Email (único), PasswordHash, Role, <span class="fk">TutorId</span> (opcional), Active, CreatedAt</td><td>Login compartilhado Java/.NET; perfil TUTOR ou VET</td></tr>
+    <tr><td>ErrorLog (apoio)</td><td><span class="pk">id</span>, procedure_nm, user_nm, error_date, error_code, error_msg</td><td>Log de erros das procedures</td></tr>
+    <tr><td>PetAuditoria (apoio)</td><td><span class="pk">id_auditoria</span>, nm_usuario, tp_operacao, dt_operacao, valor_antigo, valor_novo</td><td>Auditoria de CV_Pets (alimentada por trigger)</td></tr>
+  </table>
+
+  <h3>2.2 Relacionamentos e cardinalidades</h3>
+  <table>
+    <tr><th>Relacionamento</th><th style="width:20%">Cardinalidade</th><th>Regra de integridade</th></tr>
+    <tr><td>Tutor possui Pet</td><td>1 : N</td><td>FK <code>CV_Pets.TutorId</code>, <code>ON DELETE CASCADE</code></td></tr>
+    <tr><td>Pet tem Consulta</td><td>1 : N</td><td>FK <code>CV_Appointments.PetId</code>, <code>ON DELETE CASCADE</code></td></tr>
+    <tr><td>Clínica atende Consulta</td><td>1 : N</td><td>FK <code>CV_Appointments.ClinicId</code>, <code>ON DELETE CASCADE</code></td></tr>
+    <tr><td>Pet × Clínica</td><td>N : M</td><td>Resolvido pela entidade associativa Consulta (um pet passa por várias clínicas e vice-versa)</td></tr>
+    <tr><td>Pet recebe Vacina</td><td>1 : N</td><td>FK <code>CV_Vaccines.PetId</code>, <code>ON DELETE CASCADE</code></td></tr>
+    <tr><td>Pet usa Medicamento</td><td>1 : N</td><td>FK <code>CV_Medications.PetId</code>, <code>ON DELETE CASCADE</code></td></tr>
+    <tr class="new"><td>Usuário representa Tutor</td><td>1 : 0..1</td><td>FK opcional <code>CV_Users.TutorId</code>, <code>ON DELETE SET NULL</code> (usuário VET não tem tutor)</td></tr>
+    <tr><td>Pet gera Auditoria</td><td>1 : N (lógico)</td><td>Sem FK: gravada pelo trigger <code>TRG_AUDITORIA_CV_PETS</code></td></tr>
+  </table>
+  <p><b>Normalização:</b> todas as tabelas estão na 3FN. Os atributos são atômicos, cada tabela tem chave simples (<code>Id</code>) e não há dependência transitiva: o nome da clínica e o do tutor não se repetem nas tabelas filhas; consultas e pets apenas referenciam as chaves.</p>
+
+  <figure class="der">
+    <img src="DER_VetFlow_Sprint4.png" alt="DER físico do VetFlow">
+    <figcaption>Figura 1 — DER do VetFlow (Oracle): tabelas, chaves e cardinalidades.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ 3. MODELO FÍSICO ============================ -->
+<section>
+  <h2>3. Modelo físico (Oracle)</h2>
+  <p>Script de criação: <code>banco/01_ddl.sql</code> (as mesmas tabelas são geradas pelas migrations do EF Core). Tabelas de apoio: <code>banco/01b_tabelas_apoio.sql</code>. Coluna "Chave / restrição" lista PK, FK, UNIQUE, CHECK e DEFAULT.</p>
+
+  <h3>3.1 "CV_Tutors"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Tutors"</span></td></tr>
+    <tr><td>"Name"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"Email"</td><td>NVARCHAR2(255)</td><td>N</td><td>Índice único <code>"UQ_CV_Tutors_Email"</code></td></tr>
+    <tr><td>"Phone"</td><td>NVARCHAR2(20)</td><td>N</td><td></td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Tutors_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.2 "CV_Clinics"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Clinics"</span></td></tr>
+    <tr><td>"Name"</td><td>NVARCHAR2(200)</td><td>N</td><td></td></tr>
+    <tr><td>"Address"</td><td>NVARCHAR2(500)</td><td>N</td><td></td></tr>
+    <tr><td>"Phone"</td><td>NVARCHAR2(20)</td><td>N</td><td></td></tr>
+    <tr><td>"Email"</td><td>NVARCHAR2(255)</td><td>N</td><td></td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Clinics_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.3 "CV_Pets"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Pets"</span></td></tr>
+    <tr><td>"Name"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"Species"</td><td>NUMBER(10)</td><td>N</td><td>CHECK <code>"CK_CV_Pets_Species"</code> BETWEEN 0 AND 4</td></tr>
+    <tr><td>"Breed"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"BirthDate"</td><td>TIMESTAMP(6)</td><td>N</td><td>Não pode ser futura (validado no pacote)</td></tr>
+    <tr><td>"WeightKg"</td><td>BINARY_DOUBLE</td><td>N</td><td>Maior que zero (validado no pacote)</td></tr>
+    <tr><td>"TutorId"</td><td>RAW(16)</td><td>N</td><td><span class="fk">FK "FK_CV_Pets_CV_Tutors_TutorId"</span> → "CV_Tutors" ON DELETE CASCADE; índice <code>"IX_CV_Pets_TutorId"</code></td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Pets_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.4 "CV_Appointments"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Appointments"</span></td></tr>
+    <tr><td>"PetId"</td><td>RAW(16)</td><td>N</td><td><span class="fk">FK "FK_CV_Appointments_CV_Pets_PetId"</span> → "CV_Pets" ON DELETE CASCADE; índice <code>"IX_CV_Appointments_PetId"</code></td></tr>
+    <tr><td>"ClinicId"</td><td>RAW(16)</td><td>N</td><td><span class="fk">FK "FK_CV_Appointments_CV_Clinics_ClinicId"</span> → "CV_Clinics" ON DELETE CASCADE; índice <code>"IX_CV_Appointments_ClinicId"</code></td></tr>
+    <tr><td>"ScheduledAt"</td><td>TIMESTAMP(6)</td><td>N</td><td>Não pode estar no passado (validado no pacote)</td></tr>
+    <tr><td>"Type"</td><td>NUMBER(10)</td><td>N</td><td>CHECK <code>"CK_CV_Appointments_Type"</code> BETWEEN 0 AND 5</td></tr>
+    <tr><td>"Notes"</td><td>NVARCHAR2(1000)</td><td>N</td><td></td></tr>
+    <tr><td>"Completed"</td><td>NUMBER(1)</td><td>N</td><td>DEFAULT 0; CHECK <code>"CK_CV_Appointments_Completed"</code> IN (0, 1)</td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Appointments_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.5 "CV_Vaccines"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Vaccines"</span></td></tr>
+    <tr><td>"PetId"</td><td>RAW(16)</td><td>N</td><td><span class="fk">FK "FK_CV_Vaccines_CV_Pets_PetId"</span> → "CV_Pets" ON DELETE CASCADE; índice <code>"IX_CV_Vaccines_PetId"</code></td></tr>
+    <tr><td>"VaccineName"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"AppliedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+    <tr><td>"NextDoseAt"</td><td>TIMESTAMP(6)</td><td>N</td><td>Não pode ser anterior a "AppliedAt" (validado no pacote)</td></tr>
+    <tr><td>"Batch"</td><td>NVARCHAR2(50)</td><td>N</td><td>Lote ("NÃO INFORMADO" quando vazio)</td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Vaccines_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.6 "CV_Medications"</h3>
+  <table>
+    <tr><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Medications"</span></td></tr>
+    <tr><td>"PetId"</td><td>RAW(16)</td><td>N</td><td><span class="fk">FK "FK_CV_Medications_CV_Pets_PetId"</span> → "CV_Pets" ON DELETE CASCADE; índice <code>"IX_CV_Medications_PetId"</code></td></tr>
+    <tr><td>"Name"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"Dosage"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"Frequency"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"StartDate"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+    <tr><td>"EndDate"</td><td>TIMESTAMP(6)</td><td>N</td><td>Não pode ser anterior a "StartDate" (validado no pacote)</td></tr>
+    <tr><td>"Status"</td><td>NUMBER(10)</td><td>N</td><td>CHECK <code>"CK_CV_Medications_Status"</code> BETWEEN 0 AND 2</td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Medications_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.7 "CV_Users" <span class="small">(nova na Sprint 4)</span></h3>
+  <table>
+    <tr class="new"><th style="width:18%">Coluna</th><th style="width:22%">Tipo</th><th style="width:8%">Nulo?</th><th>Chave / restrição</th></tr>
+    <tr><td>"Id"</td><td>RAW(16)</td><td>N</td><td><span class="pk">PK "PK_CV_Users"</span></td></tr>
+    <tr><td>"Name"</td><td>NVARCHAR2(100)</td><td>N</td><td></td></tr>
+    <tr><td>"Email"</td><td>NVARCHAR2(255)</td><td>N</td><td>UNIQUE <code>"UQ_CV_Users_Email"</code> (login)</td></tr>
+    <tr><td>"PasswordHash"</td><td>NVARCHAR2(255)</td><td>N</td><td>Hash BCrypt (<code>$2a$</code>), nunca a senha em texto</td></tr>
+    <tr><td>"Role"</td><td>NVARCHAR2(10)</td><td>N</td><td>CHECK <code>"CK_CV_Users_Role"</code> IN ('TUTOR', 'VET')</td></tr>
+    <tr><td>"TutorId"</td><td>RAW(16)</td><td>S</td><td><span class="fk">FK "FK_CV_Users_CV_Tutors_TutorId"</span> → "CV_Tutors" ON DELETE SET NULL; índice <code>"IX_CV_Users_TutorId"</code></td></tr>
+    <tr><td>"Active"</td><td>NUMBER(1)</td><td>N</td><td>CHECK <code>"CK_CV_Users_Active"</code> IN (0, 1)</td></tr>
+    <tr><td>"CreatedAt"</td><td>TIMESTAMP(6)</td><td>N</td><td></td></tr>
+  </table>
+
+  <h3>3.8 Tabelas de apoio (<code>01b_tabelas_apoio.sql</code>)</h3>
+  <table>
+    <tr><th style="width:22%">Tabela</th><th>Colunas</th><th style="width:30%">Finalidade</th></tr>
+    <tr><td><code>CV_ERROR_LOG</code></td><td><span class="pk">id</span> (identity), procedure_nm, user_nm, error_date, error_code, error_msg</td><td>Log de erros das procedures; gravado por transação autônoma, sobrevive a rollback</td></tr>
+    <tr><td><code>CV_PETS_AUDITORIA</code></td><td><span class="pk">id_auditoria</span> (identity), nm_usuario, tp_operacao, dt_operacao, valor_antigo, valor_novo</td><td>Auditoria de INSERT, UPDATE e DELETE em CV_Pets</td></tr>
+  </table>
+</section>
+
+<!-- ============================ 4. PACOTES ============================ -->
+<section class="pb">
+  <h2>4. Empacotamento PL/SQL e tratamento de exceções</h2>
+  <p>As procedures, funções e o trigger da Sprint 3 foram reunidos em quatro pacotes, agrupados por responsabilidade (<code>02_pkg_cadastro.sql</code> a <code>05_pkg_auditoria_trigger.sql</code>). As aplicações Java e .NET chamam exatamente estas assinaturas. As procedures de inserção <b>não fazem COMMIT</b>: a transação é de quem chama.</p>
+
+  <h3>4.1 Códigos de erro (<code>RAISE_APPLICATION_ERROR</code>)</h3>
+  <table>
+    <tr><th style="width:14%">Código</th><th>Significado</th><th style="width:20%">HTTP nas aplicações</th></tr>
+    <tr><td>-20001</td><td>E-mail duplicado (tutor ou usuário)</td><td>409</td></tr>
+    <tr><td>-20002</td><td>Campo obrigatório nulo ou vazio</td><td>400</td></tr>
+    <tr><td>-20003</td><td>Registro referenciado não existe (tutor, pet ou clínica)</td><td>404</td></tr>
+    <tr><td>-20004</td><td>Regra de negócio violada: peso ≤ 0, nascimento no futuro, próxima dose antes da aplicação, fim antes do início, agendamento no passado, role inválida, espécie ou tipo inválido, operação de auditoria inválida</td><td>400</td></tr>
+    <tr><td>-20099</td><td>Erro inesperado (<code>WHEN OTHERS</code>, registrado antes de relançar)</td><td>500</td></tr>
+    <tr><td>-20101, -20102</td><td>Rotinas de JSON (nome obrigatório; erro de conversão)</td><td>—</td></tr>
+    <tr><td>-20204, -20205, -20206</td><td>Cálculo de idade (data inválida, nula ou futura; resultado inválido)</td><td>—</td></tr>
+    <tr><td>-20301, -20402</td><td>Listagem de pets (conversão) e relatório de peso (conversão numérica)</td><td>—</td></tr>
+  </table>
+
+  <h3>4.2 PKG_VETFLOW_CADASTRO — inserções com validação</h3>
+  <table>
+    <tr><th style="width:30%">Procedure</th><th>Parâmetros</th></tr>
+    <tr><td><code>SP_INSERT_TUTOR</code></td><td>p_name, p_email, p_phone, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_CLINIC</code></td><td>p_name, p_address, p_phone, p_email, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_PET</code></td><td>p_name, p_species, p_breed, p_birth_date, p_weight_kg, p_tutor_id, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_APPOINTMENT</code></td><td>p_pet_id, p_clinic_id, p_scheduled_at, p_type, p_notes, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_VACCINE</code></td><td>p_pet_id, p_vaccine_name, p_applied_at, p_next_dose_at, p_batch, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_MEDICATION</code></td><td>p_pet_id, p_name, p_dosage, p_frequency, p_start_date, p_end_date, p_id OUT RAW</td></tr>
+    <tr><td><code>SP_INSERT_USER</code></td><td>p_name, p_email, p_password_hash, p_role, p_tutor_id, p_id OUT RAW</td></tr>
+  </table>
+  <ul>
+    <li><b>Validações antes do INSERT:</b> campos obrigatórios (-20002); existência do tutor, pet ou clínica referenciados (-20003, no lugar do genérico ORA-02291); regras de negócio (-20004).</li>
+    <li><b>Exceções tratadas:</b> <code>DUP_VAL_ON_INDEX</code> → -20001; <code>WHEN OTHERS</code> → log + -20099.</li>
+    <li><b>Log autônomo:</b> a procedure privada <code>prc_log_erro</code> usa <code>PRAGMA AUTONOMOUS_TRANSACTION</code> e grava em <code>CV_ERROR_LOG</code> mesmo que a aplicação faça rollback.</li>
+    <li>O id devolvido em <code>p_id</code> vem de <code>SYS_GUID()</code>.</li>
+  </ul>
+
+  <h3>4.3 PKG_VETFLOW_UTIL — JSON e cálculos</h3>
+  <table>
+    <tr><th style="width:36%">Objeto</th><th>Descrição e exceções</th></tr>
+    <tr><td><code>FN_PET_TO_JSON(...)</code> RETURN VARCHAR2</td><td>JSON manual de um pet. -20101 se nome do pet ou do tutor for nulo; -20102 em erro de conversão.</td></tr>
+    <tr><td><code>FN_CALCULAR_IDADE_MESES(p_birth_date)</code> RETURN NUMBER</td><td>Idade em meses. -20205 (data nula ou futura), -20204 (data inválida), -20206 (resultado inválido).</td></tr>
+    <tr><td><code>FN_EXPORTAR_DATASET_JSON</code> RETURN CLOB</td><td>Dataset completo para o MongoDB, JSON montado manualmente com <code>DBMS_LOB.WRITEAPPEND</code>: escape de <code>\</code>, <code>"</code> e quebras de linha, números com ponto (independente de NLS), datas ISO-8601, enums como texto, <code>true/false</code>, <code>[]</code>. Erro inesperado → -20099.</td></tr>
+    <tr><td><code>SP_LISTAR_PETS_JSON</code></td><td>Lista pets em JSON via <code>DBMS_OUTPUT</code> (Sprint 3). Sem registros: aviso e registro no log (código 100). -20301 em erro de conversão.</td></tr>
+    <tr><td><code>SP_LISTAR_PETS_JSON(p_resultado OUT CLOB)</code></td><td>Overload para as aplicações: array JSON <code>[{...},{...}]</code>.</td></tr>
+  </table>
+
+  <h3>4.4 PKG_VETFLOW_RELATORIOS — relatórios</h3>
+  <table>
+    <tr><th style="width:42%">Procedure</th><th>Saída e exceções</th></tr>
+    <tr><td><code>SP_RELATORIO_PESO_POR_TUTOR</code></td><td><code>DBMS_OUTPUT</code> com soma manual por tutor e espécie, subtotal e total geral. Sem pets: aviso e log (código 100). -20402 em erro de conversão numérica; -20099 inesperado.</td></tr>
+    <tr><td><code>SP_RELATORIO_PESO_POR_TUTOR(p_cursor OUT SYS_REFCURSOR)</code></td><td>Colunas TUTOR_NAME, SPECIES, TOTAL_WEIGHT, TOTAL_PETS, uma linha por tutor e espécie; as aplicações somam os subtotais.</td></tr>
+    <tr><td><code>SP_RESUMO_CLINICO(p_cursor OUT SYS_REFCURSOR)</code></td><td>Painel: uma linha por pet ativo (PET_ID, PET_NAME, SPECIES, TUTOR_NAME, IDADE_MESES, TOTAL_VACINAS, VACINAS_VENCIDAS, MEDICAMENTOS_ATIVOS, PROXIMA_CONSULTA). -20099 inesperado.</td></tr>
+  </table>
+
+  <h3>4.5 PKG_VETFLOW_AUDITORIA e o trigger TRG_AUDITORIA_CV_PETS</h3>
+  <p>Um trigger não pode ficar dentro de um pacote. Por isso a regra mora em <code>PKG_VETFLOW_AUDITORIA.SP_REGISTRAR_AUDITORIA_PET(p_operacao, p_valor_antigo, p_valor_novo)</code>, e o trigger <code>AFTER INSERT OR UPDATE OR DELETE ON "CV_Pets" FOR EACH ROW</code> só monta os valores e chama o pacote.</p>
+  <ul>
+    <li>Operação diferente de INSERT, UPDATE ou DELETE → -20004 (registrado no log).</li>
+    <li>Sem COMMIT dentro do trigger. Se a auditoria falhar, o erro vai para <code>CV_ERROR_LOG</code> e o DML do usuário não é derrubado.</li>
+  </ul>
+
+  <h3>4.6 Testes e carga</h3>
+  <p><code>06_seed.sql</code> carrega 5 tutores, 2 clínicas, 6 pets, 6 consultas, 8 vacinas, 6 medicamentos e 3 usuários, <b>somente por meio das procedures do pacote</b>. <code>07_testes.sql</code> exercita sucesso e exceção de todos os objetos (cada procedure de cadastro, as funções de JSON e idade, os relatórios, a auditoria) e termina com rollback, sem alterar o seed.</p>
+</section>
+
+<!-- ============================ 5. MONGODB ============================ -->
+<section class="pb">
+  <h2>5. Estrutura MongoDB (banco <code>vetflow</code>)</h2>
+  <p>O dataset exportado do Oracle (<code>08_exportar_json.sql</code> → <code>dataset_vetflow.json</code>) é importado por <code>mongodb/02_importar_dados.js</code>. A estrutura é criada por <code>mongodb/01_criar_estrutura.js</code> e consultada por <code>mongodb/03_consultas.js</code>.</p>
+
+  <h3>5.1 Coleções</h3>
+  <table>
+    <tr><th style="width:18%">Coleção</th><th>Conteúdo</th><th style="width:24%">Estratégia</th></tr>
+    <tr><td><code>tutores</code></td><td>Um documento por tutor, com os <b>pets embutidos</b>; dentro de cada pet, <b>vacinas, medicamentos e consultas embutidos</b>.</td><td>Embedding</td></tr>
+    <tr><td><code>clinicas</code></td><td>Uma clínica por documento. As consultas a referenciam por <code>clinicaId</code> e guardam <code>clinicaNome</code> desnormalizado.</td><td>Referência</td></tr>
+  </table>
+
+  <h3>5.2 Por que embedding em tutores e referência em clínicas</h3>
+  <ul>
+    <li><b>Embedding (tutores → pets → vacinas, medicamentos, consultas):</b> o principal padrão de acesso é o "prontuário completo do tutor ou do pet", que sai de uma única leitura, sem joins. Os arrays crescem pouco por tutor (poucos pets, dezenas de registros por pet), então o documento fica longe do limite de 16 MB. Os dados clínicos de um pet nunca são lidos sem o pet, e o ciclo de vida deles é o mesmo.</li>
+    <li><b>Referência (clínicas):</b> a clínica é compartilhada por muitos tutores e pets e muda de forma independente (endereço, telefone). Embuti-la em cada consulta duplicaria dados e exigiria atualizar milhares de documentos. A consulta guarda só o <code>clinicaId</code> e o <code>clinicaNome</code> para listar rápido; endereço e telefone vêm de um <code>$lookup</code> quando necessário.</li>
+  </ul>
+
+  <h3>5.3 Validação e índices</h3>
+  <table>
+    <tr><th style="width:30%">Recurso</th><th>Definição</th></tr>
+    <tr><td>Validação <code>$jsonSchema</code></td><td>Em ambas as coleções (nível strict, ação error): <code>_id</code> com 32 hex, campos obrigatórios, enums de espécie, tipo de consulta e status, datas como <code>date</code>, peso maior que zero.</td></tr>
+    <tr><td>Índice único</td><td><code>ux_tutores_email</code> em <code>tutores.email</code></td></tr>
+    <tr><td>Índices de consulta</td><td><code>pets.petId</code>, <code>pets.nome</code>, <code>pets.especie</code>, <code>pets.vacinas.proximaDose</code>, <code>pets.consultas.agendadaPara</code> (tutores); <code>nome</code> (clinicas)</td></tr>
+  </table>
+
+  <h3>5.4 Formato do documento de tutor (resumo)</h3>
+  <div class="box mono" style="white-space:pre-wrap">{ "_id": "HEX32", "nome": "Carlos Mendes", "email": "...", "telefone": "...", "ativo": true, "criadoEm": ISODate,
+  "pets": [ { "petId": "HEX32", "nome": "Rex", "especie": "DOG", "raca": "Labrador", "dataNascimento": ISODate, "pesoKg": 28.5,
+              "idadeMeses": 79, "ativo": true,
+              "vacinas":      [ { "vacinaId", "nome", "aplicadaEm": ISODate, "proximaDose": ISODate, "lote" } ],
+              "medicamentos": [ { "medicamentoId", "nome", "dosagem", "frequencia", "inicio", "fim", "status": "ACTIVE" } ],
+              "consultas":    [ { "consultaId", "clinicaId", "clinicaNome", "agendadaPara": ISODate, "tipo": "CHECKUP", "observacoes", "concluida" } ] } ] }</div>
+
+  <h3>5.5 Consultas de demonstração (<code>03_consultas.js</code>)</h3>
+  <ul>
+    <li>Prontuário completo de um pet (<code>$unwind</code> + <code>$match</code>).</li>
+    <li>Vacinas vencidas (<code>proximaDose</code> menor que a data atual) com dias de atraso.</li>
+    <li>Próximas consultas com endereço e telefone da clínica (<code>$lookup</code> em <code>clinicas</code>).</li>
+    <li>Média e total de peso por espécie (<code>$group</code>).</li>
+    <li>Atualização em array aninhado com <code>arrayFilters</code>.</li>
+  </ul>
+
+  <h3>5.6 Integração com as aplicações</h3>
+  <p>A API .NET também grava o mesmo dataset no MongoDB (<code>POST /api/v1/export/mongo</code>, perfil VET), com upsert por <code>_id</code> e conversão das datas ISO para <code>Date</code>, e mantém a coleção <code>pet_timeline</code> com a linha do tempo de cada pet.</p>
+</section>
+
+</body>
+</html>
