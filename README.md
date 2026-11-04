@@ -2,6 +2,10 @@
 
 Parte de banco de dados do **VetFlow** (Challenge FIAP 2026 com a **Clyvo Vet**) para a disciplina *Mastering Relational and Non-Relational Database*. O mesmo schema Oracle é usado pelas APIs **Java (Spring)** e **.NET (EF Core)**. O dataset exportado em JSON vai para o MongoDB (banco `vetflow`).
 
+## Vídeo demonstrativo
+
+https://youtu.be/qN8BhGBNxnM
+
 ## Integrantes
 
 | Nome | RM | Turma |
